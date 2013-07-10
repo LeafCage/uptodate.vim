@@ -1,8 +1,12 @@
 let s:save_cpo = &cpo| set cpo&vim
 "=============================================================================
+command! -nargs=0   UptodateResetting    runtime plugin/uptodate.vim
 if !exists('g:uptodate_filepatterns')
   finish
 endif
+command! -nargs=* -complete=customlist,uptodate#_get_cmdcomplete_for_reload  UptodateReload
+  \ call uptodate#reload([<f-args>])
+
 
 function! s:_get_autocmd_pats_as_list(autocmd_pats) "{{{
   "TODO: split()は\,はエスケープとしてsplit対象にしない
@@ -20,6 +24,7 @@ aug uptodate
 aug END
 
 
+"======================================
 function! s:def_autocmd_for_safetylock(autocmd_pats) "{{{
   let autocmd_pats = s:_get_autocmd_pats_as_list(a:autocmd_pats)
   let autocmd_pat = join(s:__append_autoload(autocmd_pats), ',')
@@ -55,8 +60,6 @@ endfunction
 "}}}
 call s:def_autocmd_for_updatetimeheader(g:uptodate_filepatterns)
 
-command! -nargs=* -complete=customlist,uptodate#_get_cmdcomplete_for_reload  UptodateReload
-  \ call uptodate#reload([<f-args>])
 "=============================================================================
 "END "{{{1
 let &cpo = s:save_cpo| unlet s:save_cpo

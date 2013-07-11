@@ -28,7 +28,7 @@ aug END
 function! s:def_autocmd_for_safetylock(autocmd_pats) "{{{
   let autocmd_pats = s:_get_autocmd_pats_as_list(a:autocmd_pats)
   let autocmd_pat = join(s:__append_autoload(autocmd_pats), ',')
-  exe 'autocmd uptodate StdinReadPost,BufWinEnter '. autocmd_pat. '  setl ro noma'
+  exe 'autocmd uptodate StdinReadPost,BufWinEnter '. autocmd_pat. '  setl ro'
 endfunction
 "}}}
 function! s:__append_autoload(autocmd_pats) "{{{

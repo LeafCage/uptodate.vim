@@ -67,7 +67,7 @@ function! s:__log_loaded(sfilename, runtimecmd_args, updatetime) "{{{
   let runtimecmd_argslist = split(a:runtimecmd_args)
   let thispat = substitute(a:sfilename, '.*/\zeautoload/', '', '')
   let pat = substitute(get(runtimecmd_argslist, index(runtimecmd_argslist, thispat), ''), 'autoload/', '', '')
-  if !exists('g:uptodate_loaded[pat]')
+  if !exists('g:uptodate_loaded') || !has_key(g:uptodate_loaded, pat)
     return
   endif
   let g:uptodate_loaded[pat].filename = a:sfilename

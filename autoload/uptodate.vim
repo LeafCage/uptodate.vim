@@ -11,7 +11,7 @@ function! s:_reset_scriptlocalvars()
 endfunction
 call s:_reset_scriptlocalvars()
 
-"runtime!する
+"runtime!する そして読み込み中のスクリプトファイルが最新でない時は1を返す
 function! uptodate#isnot_this_uptodate(sfilename, ...) "{{{
   if has_key(s:sfiles, a:sfilename)
     return 1
@@ -67,6 +67,9 @@ function! s:__log_loaded(sfilename, runtimecmd_args, updatetime) "{{{
   let runtimecmd_argslist = split(a:runtimecmd_args)
   let thispat = substitute(a:sfilename, '.*/\zeautoload/', '', '')
   let pat = substitute(get(runtimecmd_argslist, index(runtimecmd_argslist, thispat), ''), 'autoload/', '', '')
+  if !exists('g:uptodate_loaded[pat]')
+    return
+  endif
   let g:uptodate_loaded[pat].filename = a:sfilename
   let g:uptodate_loaded[pat].ver = a:updatetime
 endfunction
@@ -85,7 +88,7 @@ endfunction
 "======================================
 ":UptodateReload の候補表示に利用
 function! uptodate#_get_cmdcomplete_for_reload(arglead, cmdline, cursorpos) "{{{
-  let libfiles = copy(g:uptodate_filepatterns)
+  let libfiles = exists('g:uptodate_filepatterns') ? copy(g:uptodate_filepatterns) : []
   return filter(libfiles, 'v:val =~? a:arglead')
 endfunction
 "}}}

@@ -25,6 +25,8 @@ aug END
 
 
 "======================================
+" 各autocmdの定義
+"======================================
 function! s:def_autocmd_for_safetylock(autocmd_pats) "{{{
   let autocmd_pats = s:_get_autocmd_pats_as_list(a:autocmd_pats)
   let autocmd_pat = join(s:__append_autoloadstr(autocmd_pats), ',')
@@ -61,6 +63,7 @@ endfunction
 "}}}
 call s:def_autocmd_for_bufwrite(g:uptodate_filepatterns)
 
+exe 'autocmd uptodate BufWritePre,FileWritePre */autoload/uptodate.vim  call uptodate#update_uptodatefile()'
 "=============================================================================
 "END "{{{1
 let &cpo = s:save_cpo| unlet s:save_cpo

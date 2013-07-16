@@ -1,3 +1,46 @@
+"最新版のautoload/uptodate.vimのみを読み込ませる "{{{
+if exists('s:thisfile_updatetime')
+  finish
+endif
+if !exists('g:uptodate_is_firstloaded')
+  let g:uptodate_is_firstloaded = 1
+  let s:firstloaded_is_this = 1
+endif
+
+let s:thisfile_updatetime = 1373950977
+try
+  if exists('g:uptodate_latesttime') && g:uptodate_latesttime >= s:thisfile_updatetime
+    finish
+  endif
+  let g:uptodate_latesttime = s:thisfile_updatetime
+
+  " NeoBundleLazyされてるplugin pathも 'runtimepath' に加える
+  if !exists('g:uptodate_lazyrtp') && exists('*neobundle#config#get_neobundles')
+    let g:uptodate_lazyrtp = join(map(filter(neobundle#config#get_neobundles(),'v:val.lazy'), 'v:val.rtp'), ',')
+    let s:vimrt_idx = match(substitute(&rtp, '\\', '/', 'g'), substitute($VIMRUNTIME, '\\', '/', 'g'))-1
+    let &rtp = &rtp[:(s:vimrt_idx)]. g:uptodate_lazyrtp. &rtp[(s:vimrt_idx):]
+    unlet s:vimrt_idx
+  endif
+  let g:uptodate_lazyrtp = get(g:, 'uptodate_lazyrtp', '')
+
+  if !exists('g:uptodate_is_runtiming')
+    let g:uptodate_is_runtiming = 1
+    runtime! autoload/uptodate.vim
+  endif
+  if g:uptodate_latesttime > s:thisfile_updatetime
+    finish
+  endif
+finally
+  unlet s:thisfile_updatetime
+  if exists('s:firstloaded_is_this')
+    exe 'set rtp-='. g:uptodate_lazyrtp
+    unlet g:uptodate_lazyrtp
+    unlet g:uptodate_is_runtiming g:uptodate_latesttime g:uptodate_is_firstloaded s:firstloaded_is_this
+  endif
+endtry
+"}}}
+
+"======================================
 if exists('s:save_cpo')| finish| endif
 let s:save_cpo = &cpo| set cpo&vim
 "=============================================================================
@@ -107,6 +150,17 @@ function! uptodate#update_timestamp() "{{{
   endif
   let updatetime = localtime()
   call setline(timestamp_row, substitute(lines[timestamp_row-1], 'UPTODATE:\s*\zs\d*\ze\.', updatetime, ''))
+endfunction
+"}}}
+"autoload/uptodate.vimのタイムスタンプ変数を更新する
+function! uptodate#update_uptodatefile() "{{{
+  let lines = getline(1, s:TIMESTAMPROW_LAST)
+  let timestamp_row = match(lines, '\s*let\s\+s:thisfile_updatetime')+1
+  if timestamp_row == 0
+    return -1
+  endif
+  let updatetime = localtime()
+  call setline(timestamp_row, 'let s:thisfile_updatetime = '. updatetime)
 endfunction
 "}}}
 

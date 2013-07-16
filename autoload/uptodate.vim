@@ -11,6 +11,20 @@ function! s:_reset_scriptlocalvars()
 endfunction
 call s:_reset_scriptlocalvars()
 
+"NeoBundleLazyされていて 'runtimepath' に加わっていないパスを一時的に加える
+function! s:_add_runtimepath_for_neobundlelazy() "{{{
+  let lazyrtp = ''
+  if exists('*neobundle#config#get_neobundles')
+    let lazyrtp = join(map(filter(neobundle#config#get_neobundles(),'v:val.lazy'), 'v:val.rtp'), ',')
+    let vimrt_idx = match(substitute(&rtp, '\\', '/', 'g'), substitute($VIMRUNTIME, '\\', '/', 'g'))-1
+    let &rtp = &rtp[:vimrt_idx]. lazyrtp. &rtp[(vimrt_idx):]
+  endif
+  return lazyrtp
+endfunction
+"}}}
+
+"=============================================================================
+
 "runtime!する そして読み込み中のスクリプトファイルが最新でない時は1を返す
 function! uptodate#isnot_this_uptodate(sfilename, ...) "{{{
   if has_key(s:sfiles, a:sfilename)
@@ -28,7 +42,7 @@ function! uptodate#isnot_this_uptodate(sfilename, ...) "{{{
 
     if !s:is_runtiming
       let s:is_runtiming = 1
-      let s:lazyrtp = s:__add_runtimepath_for_neobundlelazy()
+      let s:lazyrtp = s:_add_runtimepath_for_neobundlelazy()
       exe 'runtime! '. runtimecmd_args
     endif
     if s:latesttime > s:sfiles[a:sfilename].updatetime
@@ -50,16 +64,6 @@ function! s:__get_updatetime(filename) "{{{
     return 0
   endif
   return eval(matchstr(timestamp_line, 'UPTODATE:\s*\zs\d\+\ze\.'))
-endfunction
-"}}}
-function! s:__add_runtimepath_for_neobundlelazy() "{{{
-  let lazyrtp = ''
-  if exists('*neobundle#config#get_neobundles')
-    let lazyrtp = join(map(filter(neobundle#config#get_neobundles(),'v:val.lazy'), 'v:val.rtp'), ',')
-    let vimrt_idx = match(substitute(&rtp, '\\', '/', 'g'), substitute($VIMRUNTIME, '\\', '/', 'g'))-1
-    let &rtp = &rtp[:vimrt_idx]. lazyrtp. &rtp[(vimrt_idx):]
-  endif
-  return lazyrtp
 endfunction
 "}}}
 "g:uptodate_loadedを更新
@@ -103,6 +107,45 @@ function! uptodate#update_timestamp() "{{{
   endif
   let updatetime = localtime()
   call setline(timestamp_row, substitute(lines[timestamp_row-1], 'UPTODATE:\s*\zs\d*\ze\.', updatetime, ''))
+endfunction
+"}}}
+
+"======================================
+"runtimepathの通ったライブラリスクリプトファイルを更新する
+function! uptodate#update_libfiles(filepatterns) "{{{
+  let filepatterns = s:__select_crrpats(a:filepatterns)
+  if filepatterns == []
+    return
+  endif
+
+  let pat = get(filepatterns, 0)
+  let lazyrtp = s:_add_runtimepath_for_neobundlelazy()
+  let paths = split(globpath(&rtp, 'autoload/'. pat), "\n")
+  exe 'set rtp-='. lazyrtp
+  call filter(paths, 'filereadable(v:val)')
+  for path in paths
+    call writefile(readfile(expand('%:p'), 'b'), path, 'b')
+  endfor
+endfunction
+"}}}
+function! s:__select_crrpats(filepatterns) "{{{
+  let filepatterns = copy(a:filepatterns)
+  let crrpath = expand('%:p')
+  let crrtail = fnamemodify(crrpath, ':t')
+  call filter(filepatterns, 'fnamemodify(v:val, ":t")==crrtail')
+  if filepatterns == []
+    return []
+  endif
+
+  let i = 1
+  while filepatterns!=[]
+    let save_filepatterns = copy(filepatterns)
+    let mod = repeat(':h', i)
+    let crrupperdir = fnamemodify(crrpath, mod. ':t')
+    call filter(filepatterns, 'fnamemodify(v:val, mod. ":t")==crrupperdir')
+    let i += 1
+  endwhile
+  return save_filepatterns
 endfunction
 "}}}
 

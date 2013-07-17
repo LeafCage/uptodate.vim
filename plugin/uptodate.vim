@@ -45,7 +45,7 @@ function! s:def_autocmd_for_bufwrite(autocmd_pats) "{{{
   call s:__uniq(autocmd_pats)
   for filename in autocmd_pats
     exe 'autocmd uptodate BufWritePre,FileWritePre '. filename. '  call uptodate#update_timestamp()'
-    exe 'autocmd uptodate BufWritePre,FileWritePre '. filename. '  call uptodate#update_libfiles('. string(a:autocmd_pats). ')'
+    exe 'autocmd uptodate BufWritePost,FileWritePost '. filename. '  call uptodate#update_libfiles('. string(a:autocmd_pats). ')'
   endfor
 endfunction
 "}}}

@@ -9,10 +9,6 @@ command! -nargs=* -complete=customlist,uptodate#_get_cmdcomplete_for_reload  Upt
 
 
 "=============================================================================
-"TODO: split()は\,はエスケープとしてsplit対象にしない
-let s:filenamepatterns = type(g:uptodate_filenamepatterns)==type([]) ? g:uptodate_filenamepatterns
-  \ : split(g:uptodate_filenamepatterns, ',')
-"==================
 function! s:_uniq(list) "{{{
   let seen = {}
   for elm in a:list
@@ -28,8 +24,8 @@ endfunction
 
 "======================================
 let g:uptodate_loaded = {}
-for elm in s:filenamepatterns
-  let g:uptodate_loaded[elm] = {'filename': '', 'ver': 0}
+for elm in g:uptodate_filenamepatterns
+  let g:uptodate_loaded[elm] = {'filepath': '', 'ver': 0}
 endfor
 
 "=============================================================================
@@ -38,20 +34,20 @@ aug uptodate
 aug END
 
 "autocmd for safety lock
-let s:autocmd_pat = join(map(copy(s:filenamepatterns), '"*/autoload/". v:val'), ',')
-exe 'autocmd uptodate StdinReadPost,BufWinEnter '. s:autocmd_pat. '  call uptodate#cannot_edit_unless_istheratest('. string(s:filenamepatterns). ')'
+let s:autocmd_pat = join(map(copy(g:uptodate_filenamepatterns), '"*/autoload/". v:val'), ',')
+exe 'autocmd uptodate StdinReadPost,BufWinEnter '. s:autocmd_pat. '  call uptodate#cannot_edit_unless_istheratest('. string(g:uptodate_filenamepatterns). ')'
 unlet s:autocmd_pat
 
 "autocmd for bufwrite
-let s:autocmd_pats = copy(s:filenamepatterns)
+let s:autocmd_pats = copy(g:uptodate_filenamepatterns)
 call map(s:autocmd_pats, 'fnamemodify(v:val, ":t")')
 call s:_uniq(s:autocmd_pats)
 for s:filename in s:autocmd_pats
   exe 'autocmd uptodate BufWritePre,FileWritePre '. s:filename. '  call uptodate#update_timestamp()'
-  exe 'autocmd uptodate BufWritePost,FileWritePost '. s:filename. '  call uptodate#update_libfiles('. string(s:filenamepatterns). ')'
+  exe 'autocmd uptodate BufWritePost,FileWritePost '. s:filename. '  call uptodate#update_otherfiles('. string(g:uptodate_filenamepatterns). ')'
 endfor
 delfunction s:_uniq
-unlet s:autocmd_pats s:filename s:filenamepatterns
+unlet s:autocmd_pats s:filename
 
 exe 'autocmd uptodate BufWritePre,FileWritePre */autoload/uptodate.vim  call uptodate#update_uptodatefile()'
 "=============================================================================

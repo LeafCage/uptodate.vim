@@ -7,7 +7,7 @@ if !exists('g:uptodate_is_firstloaded')
   let s:firstloaded_is_this = 1
 endif
 
-let s:thisfile_updatetime = 1378415958
+let s:thisfile_updatetime = 1378420056
 try
   if exists('g:uptodate_latesttime') && g:uptodate_latesttime >= s:thisfile_updatetime
     finish
@@ -94,7 +94,7 @@ function! s:sfile.update_loaded_var() "{{{
   if !exists('g:uptodate_loaded') || !has_key(g:uptodate_loaded, pat)
     return
   endif
-  let g:uptodate_loaded[pat].filename = self.path
+  let g:uptodate_loaded[pat].filepath = self.path
   let g:uptodate_loaded[pat].ver = self.updatetime
 endfunction
 "}}}
@@ -172,7 +172,7 @@ function! uptodate#update_timestamp() "{{{
 endfunction
 "}}}
 "write時、runtimepathの通った他の同名ファイルを更新する
-function! uptodate#update_libfiles(filepatterns) "{{{
+function! uptodate#update_otherfiles(filepatterns) "{{{
   if has_key(b:, 'uptodate_not_ratest')
     return
   endif

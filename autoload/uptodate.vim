@@ -7,7 +7,7 @@ if !exists('g:uptodate_is_firstloaded')
   let s:firstloaded_is_this = 1
 endif
 
-let s:thisfile_updatetime = 1374041758
+let s:thisfile_updatetime = 1378393899
 try
   if exists('g:uptodate_latesttime') && g:uptodate_latesttime >= s:thisfile_updatetime
     finish
@@ -125,7 +125,7 @@ endfunction
 "======================================
 "再読み込みさせる
 function! uptodate#reload(sfilenames) "{{{
-  let sfilenames = a:sfilenames==[] ? g:uptodate_filepatterns : a:sfilenames
+  let sfilenames = a:sfilenames==[] ? g:uptodate_filenamepatterns : a:sfilenames
   for sfilename in sfilenames
     exe 'runtime autoload/'. sfilename
   endfor
@@ -135,7 +135,7 @@ endfunction
 "======================================
 ":UptodateReload の候補表示に利用
 function! uptodate#_get_cmdcomplete_for_reload(arglead, cmdline, cursorpos) "{{{
-  let libfiles = exists('g:uptodate_filepatterns') ? copy(g:uptodate_filepatterns) : []
+  let libfiles = exists('g:uptodate_filenamepatterns') ? copy(g:uptodate_filenamepatterns) : []
   return filter(libfiles, 'v:val =~? a:arglead')
 endfunction
 "}}}

@@ -1,0 +1,156 @@
+*uptodate.txt*	複数ある同名のスクリプトから最も最新版を読み込み
+
+Author  : LeafCage <leafcage+vim @ gmail.com>
+License : MIT license  {{{
+    Permission is hereby granted, free of charge, to any person obtaining
+    a copy of this software and associated documentation files (the
+    "Software"), to deal in the Software without restriction, including
+    without limitation the rights to use, copy, modify, merge, publish,
+    distribute, sublicense, and/or sell copies of the Software, and to
+    permit persons to whom the Software is furnished to do so, subject to
+    the following conditions:
+    The above copyright notice and this permission notice shall be included
+    in all copies or substantial portions of the Software.
+
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+    OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+    MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+    IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+    CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+    TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+    SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+}}}
+
+==============================================================================
+目次						*uptodate-contents*
+
+概要				|uptodate-introduction|
+使い方				|uptodate-usage|
+インターフェイス		|uptodate-interface|
+  変数				  |uptodate-variables|
+  コマンド			  |uptodate-commands|
+  関数				  |uptodate-functions|
+  自動コマンド			  |uptodate-autocmds|
+TODO				|uptodate-todo|
+
+
+==============================================================================
+概要						*uptodate-introduction*
+
+*uptodate* は複数の'runtimepath'の中にある、複数の同じ名前のautoloadスクリプト
+の内、最も最新版のスクリプトを読み込ませるようにするプラグインです。
+同じ名前のライブラリファイルを複数のプラグインで組み込んで配布しているとき、一
+方だけが更新された新しいライブラリファイルになっているのに、古い方のライブラリ
+ファイルを読み込んでしまっているなんて事態を防ぎます。
+
+最新版:
+https://github.com/LeafCage/uptodate.vim
+
+==============================================================================
+使い方						*uptodate-usage*
+
+|g:uptodate_filenamepatterns|に管理したい、autoload/以下のスクリプト名を設定し
+た上で、その管理下に置きたいスクリプトと同じ枝のautoload/以下に、
+autoload/uptodate.vimをコピーして置きます。そしてその管理下に置きたいスクリプ
+トの冒頭に以下のような記述をします。 >
+	"UPTODATE: .
+	if uptodate#isnot_this_uptodate(expand('<sfile>:p'))
+	  finish
+	endif
+
+Vimを再起動するか、|:UptodateResetting|すれば、そのスクリプトは管理下に置かれ
+ます。管理下に置かれたスクリプトは書き込む度に、"UPTODATE:のヘッダにバージョン
+を示す数字が反映されます。
+さらに、'runtimepath'内にある、全てのそのスクリプトは、書き込む度に全てがその
+内容で更新されます。つまり同期されているかのように振舞います。
+事故に気をつけてください。スクリプトの中身を削除した状態で保存すると、全てのそ
+れと同じファイル名のファイルが同じように中身が削除されます。
+
+
+==============================================================================
+インターフェイス				*uptodate-interface*
+
+------------------------------------------------------------------------------
+変数						*uptodate-variables*
+
+g:uptodate_filenamepatterns			*g:uptodate_filenamepatterns*
+	既定値: なし
+	リスト
+	uptodateで管理したいファイルのパターンを指定してください。
+	指定するのは autoload/ 以下のファイル名です。
+	例: autoload/foo.vim autoload/bar/baz.vim を指定するとき >
+
+		let g:uptodate_filenamepatterns = ['foo.vim', 'bar/baz.vim']
+
+
+g:uptodate_loaded				*g:uptodate_loaded*
+	既定値: {"{foo.vim}": {"var": 0, "filepath": ""}}
+	ユーザが定義するものではありません。uptodateが管理しているスクリプトが
+	読み込まれたときに、どのタイムスタンプの、どのpathのスクリプトが最新版
+	として読まれたかという情報が、この変数に格納されます。{foo.vim}の部分
+	は、実際には|g:uptodate_filenamepatterns|で指定したパターン名が入りま
+	す。
+
+
+------------------------------------------------------------------------------
+コマンド					*uptodate-commands*
+
+:UptodateResetting				*:UptodateResetting*
+	Vimを起動してから|g:uptodate_filenamepatterns|を変更したときに利用して
+	ください。uptodateの自動コマンドを|g:uptodate_filenamepatterns|のパタ
+	ーンで再定義します。
+
+
+:UptodateReload [{filepattern} ...]			*:UptodateReload*
+	autoload/以下のファイル名{filepattern}を指定してください。複数指定でき
+	ます。指定したスクリプトを再読込します。スクリプトをすでに読み終えてい
+	る後で、新しいバージョンのスクリプトをインストールしたときに利用してく
+	ださい。
+
+
+------------------------------------------------------------------------------
+関数						*uptodate-functions*
+
+						*uptodate#isnot_this_uptodate*
+uptodate#isnot_this_uptodate({sfilepath})
+	スクリプトの冒頭に、以下の記述をすることで、uptodateによる管理下に置き
+	ます。|uptodate-usage| >
+		"UPTODATE: .
+		if uptodate#isnot_this_uptodate(expand('<sfile>:p'))
+		  finish
+		endif
+<	中身は|:runtime!|を実行して、冒頭の"UPTODATE: を見て最も数値(バージョ
+	ン)の大きいファイルなら0を、そうでなければ1を返すようにしています。
+
+
+------------------------------------------------------------------------------
+自動コマンド					*uptodate-autocmds*
+
+uptodate  BufWinEnter,StdinReadPost */autoload/{filepattern}
+	管理下のファイルの編集時に、それが最新バージョンかどうか確認して、最新
+	バージョンでない場合は警告を出します。その場合、たとえそのファイルを編
+	集して上書きしても、最新版とは見なされません。そのときに起こるはずの自
+	動コマンドは起動しません。
+
+
+uptodate  BufWritePre,FileWritePre {filepattern}
+	管理下のファイルの書き込み時に、"UPTODATE で始まるタイムスタンプを更新
+	します。
+
+
+uptodate  BufWritePost,FileWritePost {filepattern}
+	管理下のファイルの書き込み後に、'runtimepath'から、同じパターンのファ
+	イルを探し出して、現在書き込んだファイルの内容でそれを上書きします。
+
+
+uptodate  BufWritePre,FileWritePre */autoload/uptodate.vim
+	autoload/uptodate.vimの書き込み時に、それのバージョン番号を更新します。
+
+
+==============================================================================
+TODO						*uptodate-todo*
+
+
+
+==============================================================================
+vim:tw=78:ts=8:ft=help:norl:noet:fen:fdl=0:

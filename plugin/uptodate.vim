@@ -39,19 +39,19 @@ aug END
 
 "autocmd for safety lock
 let s:autocmd_pat = join(map(copy(s:filenamepatterns), '"*/autoload/". v:val'), ',')
-exe 'autocmd uptodate StdinReadPost,BufWinEnter '. s:autocmd_pat. '  setl ro'
+exe 'autocmd uptodate StdinReadPost,BufWinEnter '. s:autocmd_pat. '  call uptodate#cannot_edit_unless_istheratest('. string(s:filenamepatterns). ')'
 unlet s:autocmd_pat
 
 "autocmd for bufwrite
 let s:autocmd_pats = copy(s:filenamepatterns)
 call map(s:autocmd_pats, 'fnamemodify(v:val, ":t")')
 call s:_uniq(s:autocmd_pats)
-for filename in s:autocmd_pats
-  exe 'autocmd uptodate BufWritePre,FileWritePre '. filename. '  call uptodate#update_timestamp()'
-  exe 'autocmd uptodate BufWritePost,FileWritePost '. filename. '  call uptodate#update_libfiles('. string(s:filenamepatterns). ')'
+for s:filename in s:autocmd_pats
+  exe 'autocmd uptodate BufWritePre,FileWritePre '. s:filename. '  call uptodate#update_timestamp()'
+  exe 'autocmd uptodate BufWritePost,FileWritePost '. s:filename. '  call uptodate#update_libfiles('. string(s:filenamepatterns). ')'
 endfor
 delfunction s:_uniq
-unlet s:autocmd_pats filename s:filenamepatterns
+unlet s:autocmd_pats s:filename s:filenamepatterns
 
 exe 'autocmd uptodate BufWritePre,FileWritePre */autoload/uptodate.vim  call uptodate#update_uptodatefile()'
 "=============================================================================

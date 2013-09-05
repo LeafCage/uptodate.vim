@@ -7,7 +7,7 @@ if !exists('g:uptodate_is_firstloaded')
   let s:firstloaded_is_this = 1
 endif
 
-let s:thisfile_updatetime = 1378411126
+let s:thisfile_updatetime = 1378415958
 try
   if exists('g:uptodate_latesttime') && g:uptodate_latesttime >= s:thisfile_updatetime
     finish
@@ -141,8 +141,27 @@ endfunction
 
 "======================================
 "autocmd
+"edit時、最新版でなければ読込専用にする
+function! uptodate#cannot_edit_unless_istheratest(filepatterns) "{{{
+  let paths = s:_get_paths(a:filepatterns)
+  let ratest = 0
+  for path in paths
+    let time = s:_get_uptodate_timestampline_num(path)
+    let ratest = time>ratest ? time : ratest
+  endfor
+  let crrtime = s:_get_uptodate_timestampline_num(expand('%:p'))
+  if crrtime < ratest
+    echohl WarningMsg| echo 'uptodate: このファイルは最新版ではありません。たとえ更新してもuptodateからは無視されます。'| echohl NONE
+    let b:uptodate_not_ratest = 1
+    setl ro
+  endif
+endfunction
+"}}}
 "write時、UPTODATE: . のタイムスタンプを発見、更新する
 function! uptodate#update_timestamp() "{{{
+  if has_key(b:, 'uptodate_not_ratest')
+    return
+  endif
   let lines = getline(1, s:TIMESTAMPROW_LAST)
   let timestamp_row = match(lines, 'UPTODATE:\s*\d*\.')+1
   if timestamp_row == 0
@@ -154,16 +173,10 @@ endfunction
 "}}}
 "write時、runtimepathの通った他の同名ファイルを更新する
 function! uptodate#update_libfiles(filepatterns) "{{{
-  let filepatterns = s:_select_crrpats(a:filepatterns)
-  if filepatterns == []
+  if has_key(b:, 'uptodate_not_ratest')
     return
   endif
-
-  let pat = get(filepatterns, 0)
-  let addedlazyrtp = s:_add_runtimepath_for_neobundlelazy()
-  let paths = split(globpath(&rtp, 'autoload/'. pat), "\n")
-  exe 'set rtp-='. addedlazyrtp
-  call filter(paths, 'filereadable(v:val)')
+  let paths = s:_get_paths(a:filepatterns)
   for path in paths
     call writefile(readfile(expand('%:p'), 'b'), path, 'b')
   endfor
@@ -214,7 +227,20 @@ function! uptodate#_get_cmdcomplete_for_reload(arglead, cmdline, cursorpos) "{{{
 endfunction
 "}}}
 "==================
-"uptodate#update_libfiles()
+"autocmd
+function! s:_get_paths(filepatterns) "{{{
+  let filepatterns = s:_select_crrpats(a:filepatterns)
+  if filepatterns == []
+    return []
+  endif
+  let pat = filepatterns[0]
+  let addedlazyrtp = s:_add_runtimepath_for_neobundlelazy()
+  let paths = split(globpath(&rtp, 'autoload/'. pat), "\n")
+  exe 'set rtp-='. addedlazyrtp
+  call filter(paths, 'filereadable(v:val)')
+  return paths
+endfunction
+"}}}
 function! s:_select_crrpats(filepatterns) "{{{
   let filepatterns = copy(a:filepatterns)
   let crrpath = expand('%:p')

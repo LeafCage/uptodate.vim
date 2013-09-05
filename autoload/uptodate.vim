@@ -7,7 +7,7 @@ if !exists('g:uptodate_is_firstloaded')
   let s:firstloaded_is_this = 1
 endif
 
-let s:thisfile_updatetime = 1378393899
+let s:thisfile_updatetime = 1378411126
 try
   if exists('g:uptodate_latesttime') && g:uptodate_latesttime >= s:thisfile_updatetime
     finish
@@ -46,83 +46,90 @@ let s:save_cpo = &cpo| set cpo&vim
 "=============================================================================
 let s:TIMESTAMPROW_LAST = 35
 
-function! s:_reset_scriptlocalvars()
-  let s:sfiles = {}
-  let s:latesttime = 0
-  let s:is_runtiming = 0
-  let s:lazyrtp = ''
-endfunction
-call s:_reset_scriptlocalvars()
-
-"NeoBundleLazyされていて 'runtimepath' に加わっていないパスを一時的に加える
-function! s:_add_runtimepath_for_neobundlelazy() "{{{
-  let lazyrtp = ''
-  if exists('*neobundle#config#get_neobundles')
-    let lazyrtp = join(map(filter(neobundle#config#get_neobundles(),'v:val.lazy'), 'v:val.rtp'), ',')
-    let vimrt_idx = match(substitute(&rtp, '\\', '/', 'g'), substitute($VIMRUNTIME, '\\', '/', 'g'))-1
-    let &rtp = &rtp[:vimrt_idx]. lazyrtp. &rtp[(vimrt_idx):]
-  endif
-  return lazyrtp
+let s:manager = {'paths': {}, 'latesttime': 0, 'is_runtiming': 0, 'addedlazyrtp': ''}
+function! s:manager.reset() "{{{
+  let self.paths = {}
+  let self.latesttime = 0
+  let self.is_runtiming = 0
+  let self.addedlazyrtp = ''
 endfunction
 "}}}
-
-"=============================================================================
-
-"runtime!する そして読み込み中のスクリプトファイルが最新でない時は1を返す
-function! uptodate#isnot_this_uptodate(sfilename, ...) "{{{
-  if has_key(s:sfiles, a:sfilename)
+let s:sfile = {}
+function! s:manager.new_sfile(path) "{{{
+  let sfile = {}
+  let sfile.is_firstloaded = self.paths=={}
+  let sfile.has_already_sourced = has_key(self.paths, a:path)
+  let self.paths[a:path] = 1
+  let sfile.path = a:path
+  let sfile.updatetime = s:_get_uptodate_timestampline_num(a:path)
+  let sfile.runtimecmd_args = substitute(a:path, '.*/\zeautoload/', '', '')
+  call extend(sfile, s:sfile, 'keep')
+  return sfile
+endfunction
+"}}}
+function! s:sfile.is_older() "{{{
+  if s:manager.latesttime >= self.updatetime
     return 1
   endif
-  let runtimecmd_args = a:0 ? a:1 : substitute(a:sfilename, '.*/\zeautoload/', '', '')
-  let s:sfiles[a:sfilename] = s:sfiles == {} ? {'firstloaded': 1} : {'firstloaded': 0}
-  let s:sfiles[a:sfilename].updatetime = s:__get_updatetime(a:sfilename)
-
-  try
-    if s:latesttime >= s:sfiles[a:sfilename].updatetime
-      return 1
-    endif
-    let s:latesttime = s:sfiles[a:sfilename].updatetime
-
-    if !s:is_runtiming
-      let s:is_runtiming = 1
-      let s:lazyrtp = s:_add_runtimepath_for_neobundlelazy()
-      exe 'runtime! '. runtimecmd_args
-    endif
-    if s:latesttime > s:sfiles[a:sfilename].updatetime
-      return 1
-    endif
-  finally
-    if s:sfiles[a:sfilename].firstloaded
-      call s:__log_loaded(a:sfilename, runtimecmd_args, s:sfiles[a:sfilename].updatetime)
-      exe 'set rtp-='. s:lazyrtp
-      call s:_reset_scriptlocalvars()
-    endif
-  endtry
+  let s:manager.latesttime = self.updatetime
 endfunction
 "}}}
-function! s:__get_updatetime(filename) "{{{
-  let lines = readfile(a:filename, '', s:TIMESTAMPROW_LAST)
-  let timestamp_line = matchstr(lines, 'UPTODATE:\s*\d\+\.')
-  if timestamp_line == ''
-    return 0
+function! s:sfile.do_runtime() "{{{
+  if s:manager.is_runtiming
+    return
   endif
-  return eval(matchstr(timestamp_line, 'UPTODATE:\s*\zs\d\+\ze\.'))
+  let s:manager.is_runtiming = 1
+  let s:manager.addedlazyrtp = s:_add_runtimepath_for_neobundlelazy()
+  exe 'runtime! '. self.runtimecmd_args
 endfunction
 "}}}
-"g:uptodate_loadedを更新
-function! s:__log_loaded(sfilename, runtimecmd_args, updatetime) "{{{
-  let runtimecmd_argslist = split(a:runtimecmd_args)
-  let thispat = substitute(a:sfilename, '.*/\zeautoload/', '', '')
+function! s:sfile.is_older_afterall() "{{{
+  return s:manager.latesttime > self.updatetime
+endfunction
+"}}}
+function! s:sfile.update_loaded_var() "{{{
+  let runtimecmd_argslist = split(self.runtimecmd_args)
+  let thispat = substitute(self.path, '.*/\zeautoload/', '', '')
   let pat = substitute(get(runtimecmd_argslist, index(runtimecmd_argslist, thispat), ''), 'autoload/', '', '')
   if !exists('g:uptodate_loaded') || !has_key(g:uptodate_loaded, pat)
     return
   endif
-  let g:uptodate_loaded[pat].filename = a:sfilename
-  let g:uptodate_loaded[pat].ver = a:updatetime
+  let g:uptodate_loaded[pat].filename = self.path
+  let g:uptodate_loaded[pat].ver = self.updatetime
+endfunction
+"}}}
+function! s:sfile.cleanup() "{{{
+  if !self.is_firstloaded
+    return
+  endif
+  exe 'set rtp-='. s:manager.addedlazyrtp
+  call s:manager.reset()
 endfunction
 "}}}
 
-"======================================
+"=============================================================================
+"Main
+"runtime!する そして読み込み中のスクリプトファイルが最新でない時は1を返す
+function! uptodate#isnot_this_uptodate(sfilepath) "{{{
+  let sfile = s:manager.new_sfile(a:sfilepath)
+  if sfile.has_already_sourced
+    return 1
+  endif
+  try
+    if sfile.is_older()
+      return 1
+    endif
+    call sfile.do_runtime()
+    if sfile.is_older_afterall()
+      return 1
+    endif
+    call sfile.update_loaded_var()
+  finally
+    call sfile.cleanup()
+  endtry
+endfunction
+"}}}
+
 "再読み込みさせる
 function! uptodate#reload(sfilenames) "{{{
   let sfilenames = a:sfilenames==[] ? g:uptodate_filenamepatterns : a:sfilenames
@@ -133,15 +140,8 @@ endfunction
 "}}}
 
 "======================================
-":UptodateReload の候補表示に利用
-function! uptodate#_get_cmdcomplete_for_reload(arglead, cmdline, cursorpos) "{{{
-  let libfiles = exists('g:uptodate_filenamepatterns') ? copy(g:uptodate_filenamepatterns) : []
-  return filter(libfiles, 'v:val =~? a:arglead')
-endfunction
-"}}}
-
-"======================================
-"UPTODATE: . のタイムスタンプを発見、更新する
+"autocmd
+"write時、UPTODATE: . のタイムスタンプを発見、更新する
 function! uptodate#update_timestamp() "{{{
   let lines = getline(1, s:TIMESTAMPROW_LAST)
   let timestamp_row = match(lines, 'UPTODATE:\s*\d*\.')+1
@@ -152,7 +152,24 @@ function! uptodate#update_timestamp() "{{{
   call setline(timestamp_row, substitute(lines[timestamp_row-1], 'UPTODATE:\s*\zs\d*\ze\.', updatetime, ''))
 endfunction
 "}}}
-"autoload/uptodate.vimのタイムスタンプ変数を更新する
+"write時、runtimepathの通った他の同名ファイルを更新する
+function! uptodate#update_libfiles(filepatterns) "{{{
+  let filepatterns = s:_select_crrpats(a:filepatterns)
+  if filepatterns == []
+    return
+  endif
+
+  let pat = get(filepatterns, 0)
+  let addedlazyrtp = s:_add_runtimepath_for_neobundlelazy()
+  let paths = split(globpath(&rtp, 'autoload/'. pat), "\n")
+  exe 'set rtp-='. addedlazyrtp
+  call filter(paths, 'filereadable(v:val)')
+  for path in paths
+    call writefile(readfile(expand('%:p'), 'b'), path, 'b')
+  endfor
+endfunction
+"}}}
+"autoload/uptodate.vimのwrite時、タイムスタンプ変数を更新する
 function! uptodate#update_uptodatefile() "{{{
   let lines = getline(1, s:TIMESTAMPROW_LAST)
   let timestamp_row = match(lines, '\s*let\s\+s:thisfile_updatetime')+1
@@ -164,25 +181,41 @@ function! uptodate#update_uptodatefile() "{{{
 endfunction
 "}}}
 
-"======================================
-"runtimepathの通ったライブラリスクリプトファイルを更新する
-function! uptodate#update_libfiles(filepatterns) "{{{
-  let filepatterns = s:__select_crrpats(a:filepatterns)
-  if filepatterns == []
-    return
-  endif
 
-  let pat = get(filepatterns, 0)
-  let lazyrtp = s:_add_runtimepath_for_neobundlelazy()
-  let paths = split(globpath(&rtp, 'autoload/'. pat), "\n")
-  exe 'set rtp-='. lazyrtp
-  call filter(paths, 'filereadable(v:val)')
-  for path in paths
-    call writefile(readfile(expand('%:p'), 'b'), path, 'b')
-  endfor
+
+"=============================================================================
+"NeoBundleLazyされていて 'runtimepath' に加わっていないパスを一時的に加える
+function! s:_add_runtimepath_for_neobundlelazy() "{{{
+  let addedlazyrtp = ''
+  if exists('*neobundle#config#get_neobundles')
+    let addedlazyrtp = join(map(filter(neobundle#config#get_neobundles(),'v:val.lazy'), 'v:val.rtp'), ',')
+    let vimrt_idx = match(substitute(&rtp, '\\', '/', 'g'), substitute($VIMRUNTIME, '\\', '/', 'g'))-1
+    let &rtp = &rtp[:vimrt_idx]. addedlazyrtp. &rtp[(vimrt_idx):]
+  endif
+  return addedlazyrtp
 endfunction
 "}}}
-function! s:__select_crrpats(filepatterns) "{{{
+"==================
+"uptodate#isnot_this_uptodate()
+function! s:_get_uptodate_timestampline_num(filepath) "{{{
+  let lines = readfile(a:filepath, '', s:TIMESTAMPROW_LAST)
+  let timestampline = matchstr(lines, 'UPTODATE:\s*\d\+\.')
+  if timestampline == ''
+    return 0
+  endif
+  return eval(matchstr(timestampline, 'UPTODATE:\s*\zs\d\+\ze\.'))
+endfunction
+"}}}
+"==================
+":UptodateReload
+function! uptodate#_get_cmdcomplete_for_reload(arglead, cmdline, cursorpos) "{{{
+  let libfiles = exists('g:uptodate_filenamepatterns') ? copy(g:uptodate_filenamepatterns) : []
+  return filter(libfiles, 'v:val =~? a:arglead')
+endfunction
+"}}}
+"==================
+"uptodate#update_libfiles()
+function! s:_select_crrpats(filepatterns) "{{{
   let filepatterns = copy(a:filepatterns)
   let crrpath = expand('%:p')
   let crrtail = fnamemodify(crrpath, ':t')

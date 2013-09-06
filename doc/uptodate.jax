@@ -130,7 +130,7 @@ uptodate  BufWinEnter,StdinReadPost */autoload/{filepattern}
 	管理下のファイルの編集時に、それが最新バージョンかどうか確認して、最新
 	バージョンでない場合は警告を出します。その場合、たとえそのファイルを編
 	集して上書きしても、最新版とは見なされません。そのときに起こるはずの自
-	動コマンドは起動しません。
+	動コマンドは機能しません。
 
 
 uptodate  BufWritePre,FileWritePre {filepattern}

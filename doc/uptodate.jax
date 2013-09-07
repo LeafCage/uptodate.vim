@@ -131,6 +131,8 @@ uptodate  BufWinEnter,StdinReadPost */autoload/{filepattern}
 	バージョンでない場合は警告を出します。その場合、たとえそのファイルを編
 	集して上書きしても、最新版とは見なされません。そのときに起こるはずの自
 	動コマンドは機能しません。
+	最新バージョンの場合は、u <C-r> のバッファローカルバインドを、書き込み
+	時に自動更新されるタイムスタンプを踏まないように改造します。
 
 
 uptodate  BufWritePre,FileWritePre {filepattern}
@@ -145,6 +147,11 @@ uptodate  BufWritePost,FileWritePost {filepattern}
 
 uptodate  BufWritePre,FileWritePre */autoload/uptodate.vim
 	autoload/uptodate.vimの書き込み時に、それのバージョン番号を更新します。
+
+
+uptodate  BufWinEnter,StdinReadPost */autoload/uptodate.vim
+	autoload/uptodate.vimの u <C-r> のバッファローカルバインドを、書き込み
+	時に自動更新されるタイムスタンプを踏まないように改造します。
 
 
 ==============================================================================

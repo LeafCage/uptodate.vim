@@ -141,9 +141,9 @@ endfunction
 
 "======================================
 "autocmd
-"edit時、最新版でなければ読込専用にする
+"edit時、最新版ならu/<C-r>Mappingを設定し、そうでなければ読込専用にする
 function! uptodate#forbid_editting_previousver(filepatterns) "{{{
-  let paths = s:_get_paths(a:filepatterns)
+  let paths = s:_get_paths(s:_select_crrpats(a:filepatterns))
   let latest = 0
   for path in paths
     let time = s:_get_uptodate_timestampline_num(path)
@@ -154,6 +154,9 @@ function! uptodate#forbid_editting_previousver(filepatterns) "{{{
     echohl WarningMsg| echo 'uptodate: このファイルは最新版ではありません。たとえ更新してもuptodateからは無視されます。'| echohl NONE
     let b:uptodate_not_latest = 1
     setl ro
+  else
+    nnoremap <buffer>u    :<C-u>call <SID>_timestampskipping_undo('^\s*"UPTODATE: ')<CR>
+    nnoremap <buffer><C-r>    :<C-u>call <SID>_timestampskipping_redo('^\s*"UPTODATE: ')<CR>
   endif
 endfunction
 "}}}
@@ -176,7 +179,7 @@ function! uptodate#update_otherfiles(filepatterns) "{{{
   if has_key(b:, 'uptodate_not_latest')
     return
   endif
-  let paths = s:_get_paths(a:filepatterns)
+  let paths = s:_get_paths(s:_select_crrpats(a:filepatterns))
   for path in paths
     call writefile(readfile(expand('%:p'), 'b'), path, 'b')
   endfor
@@ -191,6 +194,12 @@ function! uptodate#update_uptodatefile() "{{{
   endif
   let updatetime = localtime()
   call setline(timestamp_row, 'let s:thisfile_updatetime = '. updatetime)
+endfunction
+"}}}
+"autoload/uptodate.vimの編集時、u/<C-r>で、無駄にタイムスタンプ更新変更を踏ませない
+function! uptodate#define_timestampvarskipping_keymap() "{{{
+  nnoremap <buffer>u    :<C-u>call <SID>_timestampskipping_undo('\s*let\s\+s:thisfile_updatetime')<CR>
+  nnoremap <buffer><C-r>    :<C-u>call <SID>_timestampskipping_redo('\s*let\s\+s:thisfile_updatetime')<CR>
 endfunction
 "}}}
 
@@ -228,14 +237,12 @@ endfunction
 "}}}
 "==================
 "autocmd
-function! s:_get_paths(filepatterns) "{{{
-  let filepatterns = s:_select_crrpats(a:filepatterns)
-  if filepatterns == []
+function! s:_get_paths(filepattern) "{{{
+  if a:filepattern == ''
     return []
   endif
-  let pat = filepatterns[0]
   let addedlazyrtp = s:_add_runtimepath_for_neobundlelazy()
-  let paths = split(globpath(&rtp, 'autoload/'. pat), "\n")
+  let paths = split(globpath(&rtp, 'autoload/'. a:filepattern), "\n")
   exe 'set rtp-='. addedlazyrtp
   call filter(paths, 'filereadable(v:val)')
   return paths
@@ -247,7 +254,7 @@ function! s:_select_crrpats(filepatterns) "{{{
   let crrtail = fnamemodify(crrpath, ':t')
   call filter(filepatterns, 'fnamemodify(v:val, ":t")==crrtail')
   if filepatterns == []
-    return []
+    return ''
   endif
 
   let i = 1
@@ -258,7 +265,29 @@ function! s:_select_crrpats(filepatterns) "{{{
     call filter(filepatterns, 'fnamemodify(v:val, mod. ":t")==crrupperdir')
     let i += 1
   endwhile
-  return save_filepatterns
+  return get(save_filepatterns, 0, '')
+endfunction
+"}}}
+"uptodate#define_timestampvarskipping_keymap()
+function! s:_timestampskipping_undo(timestamp_pat) "{{{
+  exe 'norm! '. v:count. 'u'
+  while getline('.')=~a:timestamp_pat && undotree().seq_cur != 0
+    undo
+  endwhile
+  norm! zv
+endfunction
+"}}}
+function! s:_timestampskipping_redo(timestamp_pat) "{{{
+  let save_view = winsaveview()
+  exe 'norm!'. v:count. "\<C-r>"
+  let seq_last = undotree().seq_last
+  while getline('.')=~a:timestamp_pat && undotree().seq_cur != seq_last
+    redo
+  endwhile
+  if undotree().seq_cur == seq_last
+    call winrestview(save_view)
+  endif
+  norm! zv
 endfunction
 "}}}
 

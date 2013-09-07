@@ -50,6 +50,7 @@ delfunction s:_uniq
 unlet s:autocmd_pats s:filename
 
 exe 'autocmd uptodate BufWritePre,FileWritePre */autoload/uptodate.vim  call uptodate#update_uptodatefile()'
+exe 'autocmd uptodate StdinReadPost,BufWinEnter */autoload/uptodate.vim  call uptodate#define_timestampvarskipping_keymap()'
 "=============================================================================
 "END "{{{1
 let &cpo = s:save_cpo| unlet s:save_cpo

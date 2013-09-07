@@ -4,8 +4,8 @@ command! -nargs=0   UptodateResetting    runtime plugin/uptodate.vim
 if !exists('g:uptodate_filenamepatterns')
   finish
 endif
-command! -nargs=* -complete=customlist,uptodate#_get_cmdcomplete_for_reload  UptodateReload
-  \ call uptodate#reload([<f-args>])
+command! -nargs=* -complete=customlist,uptodate#_get_cmdcomplete_for_reload
+  \ UptodateReload    call uptodate#reload([<f-args>])
 
 
 "=============================================================================
@@ -35,7 +35,7 @@ aug END
 
 "autocmd for safety lock
 let s:autocmd_pat = join(map(copy(g:uptodate_filenamepatterns), '"*/autoload/". v:val'), ',')
-exe 'autocmd uptodate StdinReadPost,BufWinEnter '. s:autocmd_pat. '  call uptodate#cannot_edit_unless_istheratest('. string(g:uptodate_filenamepatterns). ')'
+exe 'autocmd uptodate StdinReadPost,BufWinEnter '. s:autocmd_pat. '  call uptodate#forbid_editting_previousver('. string(g:uptodate_filenamepatterns). ')'
 unlet s:autocmd_pat
 
 "autocmd for bufwrite

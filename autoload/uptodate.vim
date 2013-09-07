@@ -7,7 +7,7 @@ if !exists('g:uptodate_is_firstloaded')
   let s:firstloaded_is_this = 1
 endif
 
-let s:thisfile_updatetime = 1378420056
+let s:thisfile_updatetime = 1378579140
 try
   if exists('g:uptodate_latesttime') && g:uptodate_latesttime >= s:thisfile_updatetime
     finish
@@ -56,7 +56,7 @@ endfunction
 "}}}
 let s:sfile = {}
 function! s:manager.new_sfile(path) "{{{
-  let sfile = {}
+  let sfile = {'_': self}
   let sfile.is_firstloaded = self.paths=={}
   let sfile.has_already_sourced = has_key(self.paths, a:path)
   let self.paths[a:path] = 1
@@ -68,23 +68,23 @@ function! s:manager.new_sfile(path) "{{{
 endfunction
 "}}}
 function! s:sfile.is_older() "{{{
-  if s:manager.latesttime >= self.updatetime
+  if self._.latesttime >= self.updatetime
     return 1
   endif
-  let s:manager.latesttime = self.updatetime
+  let self._.latesttime = self.updatetime
 endfunction
 "}}}
 function! s:sfile.do_runtime() "{{{
-  if s:manager.is_runtiming
+  if self._.is_runtiming
     return
   endif
-  let s:manager.is_runtiming = 1
-  let s:manager.addedlazyrtp = s:_add_runtimepath_for_neobundlelazy()
+  let self._.is_runtiming = 1
+  let self._.addedlazyrtp = s:_add_runtimepath_for_neobundlelazy()
   exe 'runtime! '. self.runtimecmd_args
 endfunction
 "}}}
 function! s:sfile.is_older_afterall() "{{{
-  return s:manager.latesttime > self.updatetime
+  return self._.latesttime > self.updatetime
 endfunction
 "}}}
 function! s:sfile.update_loaded_var() "{{{
@@ -102,8 +102,8 @@ function! s:sfile.cleanup() "{{{
   if !self.is_firstloaded
     return
   endif
-  exe 'set rtp-='. s:manager.addedlazyrtp
-  call s:manager.reset()
+  exe 'set rtp-='. self._.addedlazyrtp
+  call self._.reset()
 endfunction
 "}}}
 
@@ -130,7 +130,7 @@ function! uptodate#isnot_this_uptodate(sfilepath) "{{{
 endfunction
 "}}}
 
-"再読み込みさせる
+"再読み込みさせる :UptodateReload
 function! uptodate#reload(sfilenames) "{{{
   let sfilenames = a:sfilenames==[] ? g:uptodate_filenamepatterns : a:sfilenames
   for sfilename in sfilenames
@@ -142,24 +142,24 @@ endfunction
 "======================================
 "autocmd
 "edit時、最新版でなければ読込専用にする
-function! uptodate#cannot_edit_unless_istheratest(filepatterns) "{{{
+function! uptodate#forbid_editting_previousver(filepatterns) "{{{
   let paths = s:_get_paths(a:filepatterns)
-  let ratest = 0
+  let latest = 0
   for path in paths
     let time = s:_get_uptodate_timestampline_num(path)
-    let ratest = time>ratest ? time : ratest
+    let latest = time>latest ? time : latest
   endfor
   let crrtime = s:_get_uptodate_timestampline_num(expand('%:p'))
-  if crrtime < ratest
+  if crrtime < latest
     echohl WarningMsg| echo 'uptodate: このファイルは最新版ではありません。たとえ更新してもuptodateからは無視されます。'| echohl NONE
-    let b:uptodate_not_ratest = 1
+    let b:uptodate_not_latest = 1
     setl ro
   endif
 endfunction
 "}}}
 "write時、UPTODATE: . のタイムスタンプを発見、更新する
 function! uptodate#update_timestamp() "{{{
-  if has_key(b:, 'uptodate_not_ratest')
+  if has_key(b:, 'uptodate_not_latest')
     return
   endif
   let lines = getline(1, s:TIMESTAMPROW_LAST)
@@ -173,7 +173,7 @@ endfunction
 "}}}
 "write時、runtimepathの通った他の同名ファイルを更新する
 function! uptodate#update_otherfiles(filepatterns) "{{{
-  if has_key(b:, 'uptodate_not_ratest')
+  if has_key(b:, 'uptodate_not_latest')
     return
   endif
   let paths = s:_get_paths(a:filepatterns)

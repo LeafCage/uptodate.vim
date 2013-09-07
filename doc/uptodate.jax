@@ -108,6 +108,11 @@ g:uptodate_loaded				*g:uptodate_loaded*
 	ださい。
 
 
+:UptodateApply					*:UptodateApply*
+	現在編集中のautoload/uptodate.vimを、これよりもファイル更新時間が古い、
+	'runtimepath'の他の場所にあるautoload/uptodate.vim全てに上書きする。
+
+
 ------------------------------------------------------------------------------
 関数						*uptodate-functions*
 

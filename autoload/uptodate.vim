@@ -139,6 +139,26 @@ function! uptodate#reload(sfilenames) "{{{
 endfunction
 "}}}
 
+"他の全てのautoload/uptodate.vimファイルの内、現在ファイルより古いものを現在ファイルで上書きする:UptodateApply
+function! uptodate#apply_uptodate_to_others() "{{{
+  let paths = s:_get_paths('uptodate.vim')
+  let crrpath = expand('%:p')
+  if crrpath !~# 'autoload/uptodate.vim$'
+    echohl WarningMsg| echo '"autoload/uptodate.vim"の中で実行してください'| echohl NONE
+    return
+  endif
+  if input('編集中のautoload/uptodate.vimをこれより古い他の全てのautoload/uptodate.vimに上書きしますか? [y/n] ') != 'y'
+    return
+  endif
+  let crrftime = getftime(crrpath)
+  for path in paths
+    if getftime(path) < crrftime
+      call writefile(readfile(crrpath, 'b'), path, 'b')
+    endif
+  endfor
+endfunction
+"}}}
+
 "======================================
 "autocmd
 "edit時、最新版ならu/<C-r>Mappingを設定し、そうでなければ読込専用にする

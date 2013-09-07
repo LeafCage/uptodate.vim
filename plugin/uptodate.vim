@@ -1,6 +1,7 @@
 let s:save_cpo = &cpo| set cpo&vim
 "=============================================================================
 command! -nargs=0   UptodateResetting    runtime plugin/uptodate.vim
+command! -nargs=0   UptodateApply    call uptodate#apply_uptodate_to_others()
 if !exists('g:uptodate_filenamepatterns')
   finish
 endif

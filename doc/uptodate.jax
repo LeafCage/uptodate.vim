@@ -95,13 +95,14 @@ g:uptodate_loaded				*g:uptodate_loaded*
 ------------------------------------------------------------------------------
 コマンド					*uptodate-commands*
 
-:UptodateResetting				*:UptodateResetting*
+:UptodateResetAutocmd				*:UptodateResetAutocmd*
 	Vimを起動してから|g:uptodate_filenamepatterns|を変更したときに利用して
 	ください。uptodateの自動コマンドを|g:uptodate_filenamepatterns|のパタ
 	ーンで再定義します。
 
 
-:UptodateReload [{filepattern} ...]			*:UptodateReload*
+						*:UptodateReloadManagedScripts*
+:UptodateReloadManagedScripts [{filepattern} ...]
 	autoload/以下のファイル名{filepattern}を指定してください。複数指定でき
 	ます。指定したスクリプトを再読込します。スクリプトをすでに読み終えてい
 	る後で、新しいバージョンのスクリプトをインストールしたときに利用してく
@@ -111,6 +112,7 @@ g:uptodate_loaded				*g:uptodate_loaded*
 :UptodateApply					*:UptodateApply*
 	現在編集中のautoload/uptodate.vimを、これよりもファイル更新時間が古い、
 	'runtimepath'の他の場所にあるautoload/uptodate.vim全てに上書きする。
+	autoload/uptodate.vimの中でだけ定義される。
 
 
 ------------------------------------------------------------------------------
@@ -154,9 +156,10 @@ uptodate  BufWritePre,FileWritePre */autoload/uptodate.vim
 	autoload/uptodate.vimの書き込み時に、それのバージョン番号を更新します。
 
 
-uptodate  BufWinEnter,StdinReadPost */autoload/uptodate.vim
+uptodate  StdinReadPost,BufNewFile,BufRead */autoload/uptodate.vim
 	autoload/uptodate.vimの u <C-r> のバッファローカルバインドを、書き込み
 	時に自動更新されるタイムスタンプを踏まないように改造します。
+	|:UptodateApply|コマンドも定義します。
 
 
 ==============================================================================

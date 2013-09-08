@@ -1,12 +1,11 @@
 let s:save_cpo = &cpo| set cpo&vim
 "=============================================================================
-command! -nargs=0   UptodateResetting    runtime plugin/uptodate.vim
-command! -nargs=0   UptodateApply    call uptodate#apply_uptodate_to_others()
+command! -nargs=0   UptodateResetAutocmd    runtime plugin/uptodate.vim
 if !exists('g:uptodate_filenamepatterns')
   finish
 endif
 command! -nargs=* -complete=customlist,uptodate#_get_cmdcomplete_for_reload
-  \ UptodateReload    call uptodate#reload([<f-args>])
+  \ UptodateReloadManagedScripts    call uptodate#reload([<f-args>])
 
 
 "=============================================================================
@@ -51,7 +50,7 @@ delfunction s:_uniq
 unlet s:autocmd_pats s:filename
 
 exe 'autocmd uptodate BufWritePre,FileWritePre */autoload/uptodate.vim  call uptodate#update_uptodatefile()'
-exe 'autocmd uptodate StdinReadPost,BufWinEnter */autoload/uptodate.vim  call uptodate#define_timestampvarskipping_keymap()'
+exe 'autocmd uptodate StdinReadPost,BufNewFile,BufRead */autoload/uptodate.vim  call uptodate#define_uptodate_localinterfaces()'
 "=============================================================================
 "END "{{{1
 let &cpo = s:save_cpo| unlet s:save_cpo

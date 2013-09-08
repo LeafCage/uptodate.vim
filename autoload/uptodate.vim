@@ -7,7 +7,7 @@ if !exists('g:uptodate_is_firstloaded')
   let s:firstloaded_is_this = 1
 endif
 
-let s:thisfile_updatetime = 1378579140
+let s:thisfile_updatetime = 1378633540
 try
   if exists('g:uptodate_latesttime') && g:uptodate_latesttime >= s:thisfile_updatetime
     finish
@@ -130,7 +130,7 @@ function! uptodate#isnot_this_uptodate(sfilepath) "{{{
 endfunction
 "}}}
 
-"再読み込みさせる :UptodateReload
+"再読み込みさせる :UptodateReloadManagedScripts
 function! uptodate#reload(sfilenames) "{{{
   let sfilenames = a:sfilenames==[] ? g:uptodate_filenamepatterns : a:sfilenames
   for sfilename in sfilenames
@@ -139,7 +139,8 @@ function! uptodate#reload(sfilenames) "{{{
 endfunction
 "}}}
 
-"他の全てのautoload/uptodate.vimファイルの内、現在ファイルより古いものを現在ファイルで上書きする:UptodateApply
+"他の全てのautoload/uptodate.vimファイルの内、現在ファイルより古いものを
+"現在ファイルで上書きする:UptodateApply
 function! uptodate#apply_uptodate_to_others() "{{{
   let paths = s:_get_paths('uptodate.vim')
   let crrpath = expand('%:p')
@@ -151,11 +152,15 @@ function! uptodate#apply_uptodate_to_others() "{{{
     return
   endif
   let crrftime = getftime(crrpath)
+  let i = 0
   for path in paths
     if getftime(path) < crrftime
       call writefile(readfile(crrpath, 'b'), path, 'b')
+      let i += 1
     endif
   endfor
+  redraw
+  echo '他の'. i. 'つのスクリプトが更新されました。'
 endfunction
 "}}}
 
@@ -217,9 +222,10 @@ function! uptodate#update_uptodatefile() "{{{
 endfunction
 "}}}
 "autoload/uptodate.vimの編集時、u/<C-r>で、無駄にタイムスタンプ更新変更を踏ませない
-function! uptodate#define_timestampvarskipping_keymap() "{{{
+function! uptodate#define_uptodate_localinterfaces() "{{{
   nnoremap <buffer>u    :<C-u>call <SID>_timestampskipping_undo('\s*let\s\+s:thisfile_updatetime')<CR>
   nnoremap <buffer><C-r>    :<C-u>call <SID>_timestampskipping_redo('\s*let\s\+s:thisfile_updatetime')<CR>
+  command! -nargs=0 -buffer   UptodateApply    call uptodate#apply_uptodate_to_others()
 endfunction
 "}}}
 
@@ -249,7 +255,7 @@ function! s:_get_uptodate_timestampline_num(filepath) "{{{
 endfunction
 "}}}
 "==================
-":UptodateReload
+":UptodateReloadManagedScripts
 function! uptodate#_get_cmdcomplete_for_reload(arglead, cmdline, cursorpos) "{{{
   let libfiles = exists('g:uptodate_filenamepatterns') ? copy(g:uptodate_filenamepatterns) : []
   return filter(libfiles, 'v:val =~? a:arglead')

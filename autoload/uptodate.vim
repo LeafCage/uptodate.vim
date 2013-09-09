@@ -7,7 +7,7 @@ if !exists('g:uptodate_is_firstloaded')
   let s:firstloaded_is_this = 1
 endif
 
-let s:thisfile_updatetime = 1378633540
+let s:thisfile_updatetime = 1378691003
 try
   if exists('g:uptodate_latesttime') && g:uptodate_latesttime >= s:thisfile_updatetime
     finish
@@ -153,7 +153,7 @@ function! uptodate#apply_uptodate_to_others() "{{{
   endif
   let crrftime = getftime(crrpath)
   let i = 0
-  for path in paths
+  for path in filter(paths, 'v:val!=crrpath')
     if getftime(path) < crrftime
       call writefile(readfile(crrpath, 'b'), path, 'b')
       let i += 1
@@ -205,9 +205,12 @@ function! uptodate#update_otherfiles(filepatterns) "{{{
     return
   endif
   let paths = s:_get_paths(s:_select_crrpats(a:filepatterns))
-  for path in paths
+  let i = 0
+  for path in filter(paths, 'v:val!="'. expand('%:p'). '"')
     call writefile(readfile(expand('%:p'), 'b'), path, 'b')
+    let i += 1
   endfor
+  echo 'uptodate: 他の'. i. 'つのスクリプトが更新されました。'
 endfunction
 "}}}
 "autoload/uptodate.vimのwrite時、タイムスタンプ変数を更新する

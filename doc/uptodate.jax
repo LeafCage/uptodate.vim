@@ -142,21 +142,21 @@ uptodate  BufWinEnter,StdinReadPost */autoload/{filepattern}
 	時に自動更新されるタイムスタンプを踏まないように改造します。
 
 
-uptodate  BufWritePre,FileWritePre {filepattern}
+uptodate  BufWritePre,FileWritePre */autoload/{filepattern}
 	管理下のファイルの書き込み時に、"UPTODATE で始まるタイムスタンプを更新
 	します。
 
 
-uptodate  BufWritePost,FileWritePost {filepattern}
+uptodate  BufWritePost,FileWritePost */autoload/{filepattern}
 	管理下のファイルの書き込み後に、'runtimepath'から、同じパターンのファ
 	イルを探し出して、現在書き込んだファイルの内容でそれを上書きします。
 
 
-uptodate  BufWritePre,FileWritePre */autoload/uptodate.vim
+uptodate_internal  BufWritePre,FileWritePre */autoload/uptodate.vim
 	autoload/uptodate.vimの書き込み時に、それのバージョン番号を更新します。
 
 
-uptodate  StdinReadPost,BufNewFile,BufRead */autoload/uptodate.vim
+uptodate_internal  StdinReadPost,BufNewFile,BufRead */autoload/uptodate.vim
 	autoload/uptodate.vimの u <C-r> のバッファローカルバインドを、書き込み
 	時に自動更新されるタイムスタンプを踏まないように改造します。
 	|:UptodateApply|コマンドも定義します。

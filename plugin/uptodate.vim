@@ -7,6 +7,8 @@ endif
 command! -nargs=* -complete=customlist,uptodate#_get_cmdcomplete_for_reload
   \ UptodateReloadManagedScripts    call uptodate#reload([<f-args>])
 
+let g:uptodate_cellardir = get(g:, 'uptodate_cellardir', '~/uptodate/_autoload')
+
 
 "=============================================================================
 let g:uptodate_loaded = {}
@@ -25,9 +27,10 @@ aug END
 let s:autocmd_pat = join(map(copy(g:uptodate_filenamepatterns), '"*/autoload/". v:val'), ',')
 exe 'autocmd uptodate StdinReadPost,BufWinEnter '. s:autocmd_pat. '  call uptodate#forbid_editting_previousver('. string(g:uptodate_filenamepatterns). ')'
 "autocmd for bufwrite
-exe 'autocmd uptodate BufWritePre,FileWritePre '. s:autocmd_pat. '  call uptodate#update_timestamp()'
-exe 'autocmd uptodate BufWritePost,FileWritePost '. s:autocmd_pat. '  call uptodate#update_otherfiles('. string(g:uptodate_filenamepatterns). ')'
-unlet s:autocmd_pat
+let s:cellarfile_pat = g:uptodate_cellardir=='' ? '' : fnamemodify(g:uptodate_cellardir, ':p:s?/$??'). '/*'
+exe 'autocmd uptodate BufWritePre,FileWritePre '. s:autocmd_pat. ','. s:cellarfile_pat. '  call uptodate#update_timestamp()'
+exe 'autocmd uptodate BufWritePost,FileWritePost '. s:autocmd_pat. ','. s:cellarfile_pat. '  call uptodate#update_otherfiles('. string(g:uptodate_filenamepatterns). ')'
+unlet s:autocmd_pat s:cellarfile_pat
 
 autocmd uptodate_internal BufWritePre,FileWritePre */autoload/uptodate.vim  call uptodate#update_uptodatefile()
 autocmd uptodate_internal StdinReadPost,BufNewFile,BufRead */autoload/uptodate.vim  call uptodate#define_uptodate_localinterfaces()

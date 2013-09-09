@@ -83,6 +83,13 @@ g:uptodate_filenamepatterns			*g:uptodate_filenamepatterns*
 		let g:uptodate_filenamepatterns = ['foo.vim', 'bar/baz.vim']
 
 
+g:uptodate_cellardir				*g:uptodate_cellardir*
+	既定値: "~/uptodate/_autoload"
+	uptodateで管理しているファイルを保存する度に、それがこのディレクトリに
+	コピーされます。一元的な保管場所を用意します。
+	空文字を指定すると無効になります。
+
+
 g:uptodate_loaded				*g:uptodate_loaded*
 	既定値: {"{foo.vim}": {"var": 0, "filepath": ""}}
 	ユーザが定義するものではありません。uptodateが管理しているスクリプトが
@@ -111,8 +118,8 @@ g:uptodate_loaded				*g:uptodate_loaded*
 
 :UptodateApply					*:UptodateApply*
 	現在編集中のautoload/uptodate.vimを、これよりもファイル更新時間が古い、
-	'runtimepath'の他の場所にあるautoload/uptodate.vim全てに上書きする。
-	autoload/uptodate.vimの中でだけ定義される。
+	'runtimepath'の他の場所にあるautoload/uptodate.vim全てに上書きします。
+	autoload/uptodate.vimの中でだけ定義されます。
 
 
 ------------------------------------------------------------------------------

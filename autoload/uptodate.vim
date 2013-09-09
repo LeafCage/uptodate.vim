@@ -7,7 +7,7 @@ if !exists('g:uptodate_is_firstloaded')
   let s:firstloaded_is_this = 1
 endif
 
-let s:thisfile_updatetime = 1378691003
+let s:thisfile_updatetime = 1378702365
 try
   if exists('g:uptodate_latesttime') && g:uptodate_latesttime >= s:thisfile_updatetime
     finish
@@ -91,9 +91,7 @@ function! s:sfile.update_loaded_var() "{{{
   let runtimecmd_argslist = split(self.runtimecmd_args)
   let thispat = substitute(self.path, '.*/\zeautoload/', '', '')
   let pat = substitute(get(runtimecmd_argslist, index(runtimecmd_argslist, thispat), ''), 'autoload/', '', '')
-  if !exists('g:uptodate_loaded') || !has_key(g:uptodate_loaded, pat)
-    return
-  endif
+  let g:uptodate_loaded = get(g:, 'uptodate_loaded', {})
   let g:uptodate_loaded[pat].filepath = self.path
   let g:uptodate_loaded[pat].ver = self.updatetime
 endfunction
@@ -204,12 +202,25 @@ function! uptodate#update_otherfiles(filepatterns) "{{{
   if has_key(b:, 'uptodate_not_latest')
     return
   endif
+  let crrpath = expand('%:p')
+  let cellardir = get(g:, 'uptodate_cellardir', '')
+  let cellardir = cellardir==''? '': fnamemodify(cellardir, ':p')
+  if cellardir=='' || crrpath =~ cellardir
+    let cellarpath = []
+  else
+    let cellardir = cellardir. '/'. fnamemodify(crrpath, ':h:s?.*/autoload/??')
+    if !isdirectory(cellardir)
+      call mkdir(cellardir, 'p')
+    endif
+    let cellarpath = [cellardir. '/'. fnamemodify(crrpath, ':t')]
+  endif
   let paths = s:_get_paths(s:_select_crrpats(a:filepatterns))
   let i = 0
-  for path in filter(paths, 'v:val!="'. expand('%:p'). '"')
+  for path in filter(extend(paths, cellarpath), 'v:val!=crrpath')
     call writefile(readfile(expand('%:p'), 'b'), path, 'b')
     let i += 1
   endfor
+  redraw
   echo 'uptodate: 他の'. i. 'つのスクリプトが更新されました。'
 endfunction
 "}}}
@@ -260,7 +271,7 @@ endfunction
 "==================
 ":UptodateReloadManagedScripts
 function! uptodate#_get_cmdcomplete_for_reload(arglead, cmdline, cursorpos) "{{{
-  let libfiles = exists('g:uptodate_filenamepatterns') ? copy(g:uptodate_filenamepatterns) : []
+  let libfiles = get(g:, 'uptodate_filenamepatterns', [])
   return filter(libfiles, 'v:val =~? a:arglead')
 endfunction
 "}}}

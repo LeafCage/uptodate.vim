@@ -7,7 +7,7 @@ if !exists('g:uptodate_is_firstloaded')
   let s:firstloaded_is_this = 1
 endif
 
-let s:thisfile_updatetime = 1378702365
+let s:thisfile_updatetime = 1378787920
 try
   if exists('g:uptodate_latesttime') && g:uptodate_latesttime >= s:thisfile_updatetime
     finish
@@ -92,6 +92,7 @@ function! s:sfile.update_loaded_var() "{{{
   let thispat = substitute(self.path, '.*/\zeautoload/', '', '')
   let pat = substitute(get(runtimecmd_argslist, index(runtimecmd_argslist, thispat), ''), 'autoload/', '', '')
   let g:uptodate_loaded = get(g:, 'uptodate_loaded', {})
+  let g:uptodate_loaded[pat] = get(g:uptodate_loaded, pat, {})
   let g:uptodate_loaded[pat].filepath = self.path
   let g:uptodate_loaded[pat].ver = self.updatetime
 endfunction
@@ -260,6 +261,9 @@ endfunction
 "==================
 "uptodate#isnot_this_uptodate()
 function! s:_get_uptodate_timestampline_num(filepath) "{{{
+  if !filereadable(a:filepath)
+    return 0
+  endif
   let lines = readfile(a:filepath, '', s:TIMESTAMPROW_LAST)
   let timestampline = matchstr(lines, 'UPTODATE:\s*\d\+\.')
   if timestampline == ''

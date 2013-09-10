@@ -7,7 +7,7 @@ if !exists('g:uptodate_is_firstloaded')
   let s:firstloaded_is_this = 1
 endif
 
-let s:thisfile_updatetime = 1378826738
+let s:thisfile_updatetime = 1378827030
 try
   if exists('g:uptodate_latesttime') && g:uptodate_latesttime >= s:thisfile_updatetime
     finish
@@ -209,7 +209,8 @@ function! uptodate#uptodate#update_otherfiles(filepatterns) "{{{
   if cellardir=='' || crrpath =~ cellardir
     let cellarpath = []
   else
-    let cellardir = cellardir. '/'. fnamemodify(crrpath, ':h:s?.*/autoload/??')
+    let crrdir = fnamemodify(crrpath, ':h:s?.*/autoload\ze\%(/\|$\)??')
+    let cellardir = cellardir. crrdir
     if !isdirectory(cellardir)
       call mkdir(cellardir, 'p')
     endif

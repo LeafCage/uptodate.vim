@@ -50,11 +50,11 @@ https://github.com/LeafCage/uptodate.vim
 使い方						*uptodate-usage*
 
 |g:uptodate_filenamepatterns|に管理したい、autoload/以下のスクリプト名を設定し
-た上で、その管理下に置きたいスクリプトと同じ枝のautoload/以下に、
-autoload/uptodate.vimをコピーして置きます。そしてその管理下に置きたいスクリプ
-トの冒頭に以下のような記述をします。 >
+た上で、その管理下に置きたいスクリプトと同じ枝のautoload/uptodate/以下に、
+autoload/uptodate/uptodate.vimをコピーして置きます。そしてその管理下に置きたい
+スクリプトの冒頭に以下のような記述をします。 >
 	"UPTODATE: .
-	if uptodate#isnot_this_uptodate(expand('<sfile>:p'))
+	if uptodate#uptodate#isnot_this_uptodate(expand('<sfile>:p'))
 	  finish
 	endif
 
@@ -117,20 +117,21 @@ g:uptodate_loaded				*g:uptodate_loaded*
 
 
 :UptodateApply					*:UptodateApply*
-	現在編集中のautoload/uptodate.vimを、これよりもファイル更新時間が古い、
-	'runtimepath'の他の場所にあるautoload/uptodate.vim全てに上書きします。
-	autoload/uptodate.vimの中でだけ定義されます。
+	現在編集中のautoload/uptodate/uptodate.vimを、これよりもファイル更新時
+	間が古い、'runtimepath'の他の場所にあるautoload/uptodate/uptodate.vim
+	全てに上書きします。
+	autoload/uptodate/uptodate.vimの中でだけ定義されます。
 
 
 ------------------------------------------------------------------------------
 関数						*uptodate-functions*
 
-						*uptodate#isnot_this_uptodate*
-uptodate#isnot_this_uptodate({sfilepath})
+				*uptodate#uptodate#isnot_this_uptodate*
+uptodate#uptodate#isnot_this_uptodate({sfilepath})
 	スクリプトの冒頭に、以下の記述をすることで、uptodateによる管理下に置き
 	ます。|uptodate-usage| >
 		"UPTODATE: .
-		if uptodate#isnot_this_uptodate(expand('<sfile>:p'))
+		if uptodate#uptodate#isnot_this_uptodate(expand('<sfile>:p'))
 		  finish
 		endif
 <	中身は|:runtime!|を実行して、冒頭の"UPTODATE: を見て最も数値(バージョ
@@ -159,13 +160,15 @@ uptodate  BufWritePost,FileWritePost */autoload/{filepattern}
 	イルを探し出して、現在書き込んだファイルの内容でそれを上書きします。
 
 
-uptodate_internal  BufWritePre,FileWritePre */autoload/uptodate.vim
-	autoload/uptodate.vimの書き込み時に、それのバージョン番号を更新します。
+uptodate_internal  BufWritePre,FileWritePre */autoload/uptodate/uptodate.vim
+	autoload/uptodate/uptodate.vimの書き込み時に、それのバージョン番号を更
+	新します。
 
 
-uptodate_internal  StdinReadPost,BufNewFile,BufRead */autoload/uptodate.vim
-	autoload/uptodate.vimの u <C-r> のバッファローカルバインドを、書き込み
-	時に自動更新されるタイムスタンプを踏まないように改造します。
+uptodate_internal  StdinReadPost,BufNewFile,BufRead
+					*/autoload/uptodate/uptodate.vim
+	autoload/uptodate/uptodate.vimの u <C-r> のバッファローカルバインドを、
+	書き込み時に自動更新されるタイムスタンプを踏まないように改造します。
 	|:UptodateApply|コマンドも定義します。
 
 

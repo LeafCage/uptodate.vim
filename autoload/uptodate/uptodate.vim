@@ -1,4 +1,4 @@
-"最新版のautoload/uptodate.vimのみを読み込ませる "{{{
+"最新版のautoload/uptodate/uptodate.vimのみを読み込ませる "{{{
 if exists('s:thisfile_updatetime')
   finish
 endif
@@ -7,7 +7,7 @@ if !exists('g:uptodate_is_firstloaded')
   let s:firstloaded_is_this = 1
 endif
 
-let s:thisfile_updatetime = 1378787920
+let s:thisfile_updatetime = 1378826738
 try
   if exists('g:uptodate_latesttime') && g:uptodate_latesttime >= s:thisfile_updatetime
     finish
@@ -25,7 +25,7 @@ try
 
   if !exists('g:uptodate_is_runtiming')
     let g:uptodate_is_runtiming = 1
-    runtime! autoload/uptodate.vim
+    runtime! autoload/uptodate/uptodate.vim
   endif
   if g:uptodate_latesttime > s:thisfile_updatetime
     finish
@@ -109,7 +109,7 @@ endfunction
 "=============================================================================
 "Main
 "runtime!する そして読み込み中のスクリプトファイルが最新でない時は1を返す
-function! uptodate#isnot_this_uptodate(sfilepath) "{{{
+function! uptodate#uptodate#isnot_this_uptodate(sfilepath) "{{{
   let sfile = s:manager.new_sfile(a:sfilepath)
   if sfile.has_already_sourced
     return 1
@@ -130,7 +130,7 @@ endfunction
 "}}}
 
 "再読み込みさせる :UptodateReloadManagedScripts
-function! uptodate#reload(sfilenames) "{{{
+function! uptodate#uptodate#reload(sfilenames) "{{{
   let sfilenames = a:sfilenames==[] ? g:uptodate_filenamepatterns : a:sfilenames
   for sfilename in sfilenames
     exe 'runtime autoload/'. sfilename
@@ -138,16 +138,16 @@ function! uptodate#reload(sfilenames) "{{{
 endfunction
 "}}}
 
-"他の全てのautoload/uptodate.vimファイルの内、現在ファイルより古いものを
+"他の全てのautoload/uptodate/uptodate.vimファイルの内、現在ファイルより古いものを
 "現在ファイルで上書きする:UptodateApply
-function! uptodate#apply_uptodate_to_others() "{{{
-  let paths = s:_get_paths('uptodate.vim')
+function! uptodate#uptodate#apply_uptodate_to_others() "{{{
+  let paths = s:_get_paths('uptodate/uptodate.vim')
   let crrpath = expand('%:p')
-  if crrpath !~# 'autoload/uptodate.vim$'
-    echohl WarningMsg| echo '"autoload/uptodate.vim"の中で実行してください'| echohl NONE
+  if crrpath !~# 'autoload/uptodate/uptodate.vim$'
+    echohl WarningMsg| echo '"autoload/uptodate/uptodate.vim"の中で実行してください'| echohl NONE
     return
   endif
-  if input('編集中のautoload/uptodate.vimをこれより古い他の全てのautoload/uptodate.vimに上書きしますか? [y/n] ') != 'y'
+  if input('編集中のautoload/uptodate/uptodate.vimをこれより古い他の全てのautoload/uptodate/uptodate.vimに上書きしますか? [y/n] ') != 'y'
     return
   endif
   let crrftime = getftime(crrpath)
@@ -166,7 +166,7 @@ endfunction
 "======================================
 "autocmd
 "edit時、最新版ならu/<C-r>Mappingを設定し、そうでなければ読込専用にする
-function! uptodate#forbid_editting_previousver(filepatterns) "{{{
+function! uptodate#uptodate#forbid_editting_previousver(filepatterns) "{{{
   let paths = s:_get_paths(s:_select_crrpats(a:filepatterns))
   let latest = 0
   for path in paths
@@ -185,7 +185,7 @@ function! uptodate#forbid_editting_previousver(filepatterns) "{{{
 endfunction
 "}}}
 "write時、UPTODATE: . のタイムスタンプを発見、更新する
-function! uptodate#update_timestamp() "{{{
+function! uptodate#uptodate#update_timestamp() "{{{
   if has_key(b:, 'uptodate_not_latest')
     return
   endif
@@ -199,7 +199,7 @@ function! uptodate#update_timestamp() "{{{
 endfunction
 "}}}
 "write時、runtimepathの通った他の同名ファイルを更新する
-function! uptodate#update_otherfiles(filepatterns) "{{{
+function! uptodate#uptodate#update_otherfiles(filepatterns) "{{{
   if has_key(b:, 'uptodate_not_latest')
     return
   endif
@@ -226,7 +226,7 @@ function! uptodate#update_otherfiles(filepatterns) "{{{
 endfunction
 "}}}
 "autoload/uptodate.vimのwrite時、タイムスタンプ変数を更新する
-function! uptodate#update_uptodatefile() "{{{
+function! uptodate#uptodate#update_uptodatefile() "{{{
   let lines = getline(1, s:TIMESTAMPROW_LAST)
   let timestamp_row = match(lines, '\s*let\s\+s:thisfile_updatetime')+1
   if timestamp_row == 0
@@ -237,10 +237,10 @@ function! uptodate#update_uptodatefile() "{{{
 endfunction
 "}}}
 "autoload/uptodate.vimの編集時、u/<C-r>で、無駄にタイムスタンプ更新変更を踏ませない
-function! uptodate#define_uptodate_localinterfaces() "{{{
+function! uptodate#uptodate#define_uptodate_localinterfaces() "{{{
   nnoremap <buffer>u    :<C-u>call <SID>_timestampskipping_undo('\s*let\s\+s:thisfile_updatetime')<CR>
   nnoremap <buffer><C-r>    :<C-u>call <SID>_timestampskipping_redo('\s*let\s\+s:thisfile_updatetime')<CR>
-  command! -nargs=0 -buffer   UptodateApply    call uptodate#apply_uptodate_to_others()
+  command! -nargs=0 -buffer   UptodateApply    call uptodate#uptodate#apply_uptodate_to_others()
 endfunction
 "}}}
 
@@ -259,7 +259,7 @@ function! s:_add_runtimepath_for_neobundlelazy() "{{{
 endfunction
 "}}}
 "==================
-"uptodate#isnot_this_uptodate()
+"uptodate#uptodate#isnot_this_uptodate()
 function! s:_get_uptodate_timestampline_num(filepath) "{{{
   if !filereadable(a:filepath)
     return 0
@@ -274,7 +274,7 @@ endfunction
 "}}}
 "==================
 ":UptodateReloadManagedScripts
-function! uptodate#_get_cmdcomplete_for_reload(arglead, cmdline, cursorpos) "{{{
+function! uptodate#uptodate#_get_cmdcomplete_for_reload(arglead, cmdline, cursorpos) "{{{
   let libfiles = get(g:, 'uptodate_filenamepatterns', [])
   return filter(libfiles, 'v:val =~? a:arglead')
 endfunction
@@ -312,7 +312,7 @@ function! s:_select_crrpats(filepatterns) "{{{
   return get(save_filepatterns, 0, '')
 endfunction
 "}}}
-"uptodate#define_timestampvarskipping_keymap()
+"uptodate#uptodate#define_timestampvarskipping_keymap()
 function! s:_timestampskipping_undo(timestamp_pat) "{{{
   exe 'norm! '. v:count. 'u'
   while getline('.')=~a:timestamp_pat && undotree().seq_cur != 0

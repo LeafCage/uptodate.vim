@@ -54,7 +54,7 @@ https://github.com/LeafCage/uptodate.vim
 autoload/uptodate/uptodate.vimをコピーして置きます。そしてその管理下に置きたい
 スクリプトの冒頭に以下のような記述をします。 >
 	"UPTODATE: .
-	if uptodate#uptodate#isnot_this_uptodate(expand('<sfile>:p'))
+	if lib#uptodate#isnot_this_uptodate(expand('<sfile>:p'))
 	  finish
 	endif
 
@@ -126,12 +126,12 @@ g:uptodate_loaded				*g:uptodate_loaded*
 ------------------------------------------------------------------------------
 関数						*uptodate-functions*
 
-				*uptodate#uptodate#isnot_this_uptodate*
-uptodate#uptodate#isnot_this_uptodate({sfilepath})
+				*lib#uptodate#isnot_this_uptodate*
+lib#uptodate#isnot_this_uptodate({sfilepath})
 	スクリプトの冒頭に、以下の記述をすることで、uptodateによる管理下に置き
 	ます。|uptodate-usage| >
 		"UPTODATE: .
-		if uptodate#uptodate#isnot_this_uptodate(expand('<sfile>:p'))
+		if lib#uptodate#isnot_this_uptodate(expand('<sfile>:p'))
 		  finish
 		endif
 <	中身は|:runtime!|を実行して、冒頭の"UPTODATE: を見て最も数値(バージョ
@@ -175,6 +175,8 @@ uptodate_internal  StdinReadPost,BufNewFile,BufRead
 ==============================================================================
 TODO						*uptodate-todo*
 
+- u <C-r> でカウント指定を可能にする。
+- 現在管理中のファイルを一覧する
 
 
 ==============================================================================

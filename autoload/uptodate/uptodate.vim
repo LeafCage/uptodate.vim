@@ -7,7 +7,7 @@ if !exists('g:uptodate_is_firstloaded')
   let s:firstloaded_is_this = 1
 endif
 
-let s:thisfile_updatetime = 1378827030
+let s:thisfile_updatetime = 1378919817
 try
   if exists('g:uptodate_latesttime') && g:uptodate_latesttime >= s:thisfile_updatetime
     finish
@@ -179,8 +179,7 @@ function! uptodate#uptodate#forbid_editting_previousver(filepatterns) "{{{
     let b:uptodate_not_latest = 1
     setl ro
   else
-    nnoremap <buffer>u    :<C-u>call <SID>_timestampskipping_undo('^\s*"UPTODATE: ')<CR>
-    nnoremap <buffer><C-r>    :<C-u>call <SID>_timestampskipping_redo('^\s*"UPTODATE: ')<CR>
+    call uptodate#uptodate#define_libfile_localinterfaces()
   endif
 endfunction
 "}}}
@@ -226,7 +225,7 @@ function! uptodate#uptodate#update_otherfiles(filepatterns) "{{{
   echo 'uptodate: 他の'. i. 'つのスクリプトが更新されました。'
 endfunction
 "}}}
-"autoload/uptodate.vimのwrite時、タイムスタンプ変数を更新する
+"autoload/uptodate/uptodate.vimのwrite時、タイムスタンプ変数を更新する
 function! uptodate#uptodate#update_uptodatefile() "{{{
   let lines = getline(1, s:TIMESTAMPROW_LAST)
   let timestamp_row = match(lines, '\s*let\s\+s:thisfile_updatetime')+1
@@ -237,7 +236,12 @@ function! uptodate#uptodate#update_uptodatefile() "{{{
   call setline(timestamp_row, 'let s:thisfile_updatetime = '. updatetime)
 endfunction
 "}}}
-"autoload/uptodate.vimの編集時、u/<C-r>で、無駄にタイムスタンプ更新変更を踏ませない
+"編集時、u/<C-r>で、無駄にタイムスタンプ更新変更を踏ませない
+function! uptodate#uptodate#define_libfile_localinterfaces() "{{{
+  nnoremap <buffer>u    :<C-u>call <SID>_timestampskipping_undo('^\s*"UPTODATE: ')<CR>
+  nnoremap <buffer><C-r>    :<C-u>call <SID>_timestampskipping_redo('^\s*"UPTODATE: ')<CR>
+endfunction
+"}}}
 function! uptodate#uptodate#define_uptodate_localinterfaces() "{{{
   nnoremap <buffer>u    :<C-u>call <SID>_timestampskipping_undo('\s*let\s\+s:thisfile_updatetime')<CR>
   nnoremap <buffer><C-r>    :<C-u>call <SID>_timestampskipping_redo('\s*let\s\+s:thisfile_updatetime')<CR>

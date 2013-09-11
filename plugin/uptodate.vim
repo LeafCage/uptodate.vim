@@ -28,6 +28,8 @@ exe 'autocmd uptodate StdinReadPost,BufWinEnter '. s:autocmd_pat. '  call uptoda
 let s:cellarfile_pat = g:uptodate_cellardir=='' ? '' : fnamemodify(g:uptodate_cellardir, ':p:s?/$??'). '/*'
 exe 'autocmd uptodate BufWritePre,FileWritePre '. s:autocmd_pat. ','. s:cellarfile_pat. '  call uptodate#uptodate#update_timestamp()'
 exe 'autocmd uptodate BufWritePost,FileWritePost '. s:autocmd_pat. ','. s:cellarfile_pat. '  call uptodate#uptodate#update_otherfiles('. string(g:uptodate_filenamepatterns). ')'
+
+exe 'autocmd uptodate StdinReadPost,BufWinEnter '. s:cellarfile_pat. '  call uptodate#uptodate#define_libfile_localinterfaces()'
 unlet s:autocmd_pat s:cellarfile_pat
 
 aug uptodate_internal

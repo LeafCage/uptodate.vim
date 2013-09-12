@@ -7,7 +7,7 @@ if !exists('g:uptodate_is_firstloaded')
   let s:firstloaded_is_this = 1
 endif
 
-let s:thisfile_updatetime = 1378948958
+let s:thisfile_updatetime = 1378949601
 try
   if exists('g:uptodate_latesttime') && g:uptodate_latesttime >= s:thisfile_updatetime
     finish
@@ -174,14 +174,18 @@ function! lib#uptodate#apply_uptodate_to_others() "{{{
   endif
   let crrftime = getftime(crrpath)
   let i = 0
+  let updatedpaths = []
   for path in filter(paths, 'v:val!=crrpath')
-    if getftime(path) < crrftime
-      call writefile(readfile(crrpath, 'b'), path, 'b')
-      let i += 1
+    if getftime(path) >= crrftime
+      continue
     endif
+    call writefile(readfile(crrpath, 'b'), path, 'b')
+    call add(updatedpaths, path)
+    let i += 1
   endfor
   redraw
   echo '他の'. i. 'つのスクリプトが更新されました。'
+  echo join(updatedpaths, "\n")
 endfunction
 "}}}
 

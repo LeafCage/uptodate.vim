@@ -7,7 +7,7 @@ if !exists('g:uptodate_is_firstloaded')
   let s:firstloaded_is_this = 1
 endif
 
-let s:thisfile_updatetime = 1378949601
+let s:thisfile_updatetime = 1378957620
 try
   if exists('g:uptodate_latesttime') && g:uptodate_latesttime >= s:thisfile_updatetime
     finish
@@ -80,7 +80,7 @@ function! s:sfile.do_runtime() "{{{
   endif
   let self._.is_runtiming = 1
   let self._.addedlazyrtp = s:new_addedlazyrtp()
-  exe 'runtime! '. self.runtimecmd_args
+  exe 'runtime!' self.runtimecmd_args
 endfunction
 "}}}
 function! s:sfile.is_older_afterall() "{{{
@@ -350,7 +350,7 @@ endfunction
 "}}}
 "lib#uptodate#define_timestampvarskipping_keymap()
 function! s:_timestampskipping_undo(timestamp_pat) "{{{
-  exe 'norm! '. v:count. 'u'
+  exe 'norm!' v:count. 'u'
   while getline('.')=~a:timestamp_pat && undotree().seq_cur != 0
     undo
   endwhile
@@ -359,7 +359,7 @@ endfunction
 "}}}
 function! s:_timestampskipping_redo(timestamp_pat) "{{{
   let save_view = winsaveview()
-  exe 'norm!'. v:count. "\<C-r>"
+  exe 'norm!' v:count. "\<C-r>"
   let seq_last = undotree().seq_last
   while getline('.')=~a:timestamp_pat && undotree().seq_cur != seq_last
     redo

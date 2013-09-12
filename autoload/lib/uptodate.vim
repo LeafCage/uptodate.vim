@@ -79,7 +79,7 @@ function! s:sfile.do_runtime() "{{{
     return
   endif
   let self._.is_runtiming = 1
-  let self._.addedlazyrtp = s:_add_runtimepath_for_neobundlelazy()
+  let self._.addedlazyrtp = s:new_addedlazyrtp()
   exe 'runtime! '. self.runtimecmd_args
 endfunction
 "}}}
@@ -101,8 +101,30 @@ function! s:sfile.cleanup() "{{{
   if !self.is_firstloaded
     return
   endif
-  exe 'set rtp-='. self._.addedlazyrtp
+  call self._.addedlazyrtp.untap()
   call self._.reset()
+endfunction
+"}}}
+"==================
+let s:addedlazyrtp = {}
+function! s:new_addedlazyrtp() "{{{
+  let addedlazyrtp = {'rtp': ''}
+  call extend(addedlazyrtp, s:addedlazyrtp, 'keep')
+  call addedlazyrtp.tap()
+  return addedlazyrtp
+endfunction
+"}}}
+function! s:addedlazyrtp.tap() "{{{
+  if !exists('*neobundle#config#get_neobundles')
+    return
+  endif
+  let self.rtp = join(map(filter(neobundle#config#get_neobundles(),'v:val.lazy'), 'v:val.rtp'), ',')
+  let vimrt_idx = match(substitute(&rtp, '\\', '/', 'g'), substitute($VIMRUNTIME, '\\', '/', 'g'))-1
+  let &rtp = &rtp[:vimrt_idx]. self.rtp. &rtp[(vimrt_idx):]
+endfunction
+"}}}
+function! s:addedlazyrtp.untap() "{{{
+  exe 'set rtp-='. self.rtp
 endfunction
 "}}}
 
@@ -290,9 +312,9 @@ function! s:_get_paths(filepattern) "{{{
   if a:filepattern == ''
     return []
   endif
-  let addedlazyrtp = s:_add_runtimepath_for_neobundlelazy()
+  let addedrtp = s:new_addedlazyrtp()
   let paths = split(globpath(&rtp, 'autoload/'. a:filepattern), "\n")
-  exe 'set rtp-='. addedlazyrtp
+  call addedrtp.untap()
   call filter(paths, 'filereadable(v:val)')
   return paths
 endfunction

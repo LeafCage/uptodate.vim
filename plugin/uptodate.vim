@@ -6,6 +6,7 @@ if !exists('g:uptodate_filenamepatterns')
 endif
 command! -nargs=* -complete=customlist,uptodate#uptodate#_get_cmdcomplete_for_reload
   \ UptodateReloadManagedScripts    call lib#uptodate#reload([<f-args>])
+command! -nargs=0   UptodateShowManagedScripts    call lib#uptodate#show_managed_scripts()
 
 let g:uptodate_cellardir = get(g:, 'uptodate_cellardir', '~/uptodate/_autoload')
 

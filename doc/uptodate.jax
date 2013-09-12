@@ -116,6 +116,10 @@ g:uptodate_loaded				*g:uptodate_loaded*
 	ださい。
 
 
+:UptodateShowManagedScripts			*:UptodateShowManagedScripts*
+	現在uptodate.vimで管理されるスクリプトを一覧表示する。
+
+
 :UptodateApply					*:UptodateApply*
 	現在編集中のautoload/uptodate/uptodate.vimを、これよりもファイル更新時
 	間が古い、'runtimepath'の他の場所にあるautoload/uptodate/uptodate.vim
@@ -176,7 +180,6 @@ uptodate_internal  StdinReadPost,BufNewFile,BufRead
 TODO						*uptodate-todo*
 
 - u <C-r> でカウント指定を可能にする。
-- 現在管理中のファイルを一覧する
 
 
 ==============================================================================

@@ -7,7 +7,7 @@ if !exists('g:uptodate_is_firstloaded')
   let s:firstloaded_is_this = 1
 endif
 
-let s:thisfile_updatetime = 1378919817
+let s:thisfile_updatetime = 1378948958
 try
   if exists('g:uptodate_latesttime') && g:uptodate_latesttime >= s:thisfile_updatetime
     finish
@@ -185,6 +185,23 @@ function! lib#uptodate#apply_uptodate_to_others() "{{{
 endfunction
 "}}}
 
+function! lib#uptodate#show_managed_scripts() "{{{
+  let pats = map(copy(g:uptodate_filenamepatterns), '"autoload/". v:val')
+  let addedrtp = s:new_addedlazyrtp()
+  let managedscripts = []
+  for pat in pats
+    let findpaths = findfile(pat, &rtp, -1)
+    call extend(managedscripts, findpaths)
+  endfor
+  call addedrtp.untap()
+  for pat in g:uptodate_filenamepatterns
+    let findpaths = findfile(pat, g:uptodate_cellardir, -1)
+    call extend(managedscripts, findpaths)
+  endfor
+  ec join(map(managedscripts, 'fnamemodify(v:val, ":p")'), "\n")
+endfunction
+"}}}
+
 "======================================
 "autocmd
 "edit時、最新版ならu/<C-r>Mappingを設定し、そうでなければ読込専用にする
@@ -274,18 +291,6 @@ endfunction
 
 
 "=============================================================================
-"NeoBundleLazyされていて 'runtimepath' に加わっていないパスを一時的に加える
-function! s:_add_runtimepath_for_neobundlelazy() "{{{
-  let addedlazyrtp = ''
-  if exists('*neobundle#config#get_neobundles')
-    let addedlazyrtp = join(map(filter(neobundle#config#get_neobundles(),'v:val.lazy'), 'v:val.rtp'), ',')
-    let vimrt_idx = match(substitute(&rtp, '\\', '/', 'g'), substitute($VIMRUNTIME, '\\', '/', 'g'))-1
-    let &rtp = &rtp[:vimrt_idx]. addedlazyrtp. &rtp[(vimrt_idx):]
-  endif
-  return addedlazyrtp
-endfunction
-"}}}
-"==================
 "lib#uptodate#isnot_this_uptodate()
 function! s:_get_uptodate_timestampline_num(filepath) "{{{
   if !filereadable(a:filepath)
